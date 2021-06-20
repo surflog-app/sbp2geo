@@ -16,8 +16,8 @@
     "geojson"
   ],
   "scripts": {
-    "build": "npx rollup ./sources/sbp2json/index.mjs --file ./index.js --format commonjs",
-    "build-cli": "npx rollup ./sources/cli.js --file ./bin/sbp2geo.js --format commonjs --banner '#!/usr/bin/env node'",
+    "build": "npx rollup ./src/sbp2json/index.mjs --file ./index.js --format commonjs",
+    "build-cli": "npx rollup ./src/cli.js --file ./bin/sbp2geo.js --format commonjs --banner '#!/usr/bin/env node'",
     "predeploy": "npm version patch --git-tag-version",
     "deploy": "npm publish"
   },
