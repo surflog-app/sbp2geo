@@ -2,9 +2,10 @@
   "name": "sbp2geo",
   "version": "1.0.1",
   "description": "SBP to GeoJSON",
-  "main": "sources/sbp2json.js",
+  "main": "index.js",
   "files": [
-    "sources/sbp2json.js"
+    "index.js",
+    "bin/sbp2geo.js"
   ],
   "bin": {
     "sbp2geo": "bin/sbp2geo.js"
@@ -15,9 +16,9 @@
     "geojson"
   ],
   "scripts": {
-    "build": "npx rollup ./sources/sbp2json/index.mjs --file ./sources/sbp2json.js --format commonjs",
+    "build": "npx rollup ./sources/sbp2json/index.mjs --file ./index.js --format commonjs",
     "build-cli": "npx rollup ./sources/cli.js --file ./bin/sbp2geo.js",
-    "prepublish": "npm version patch --git-tag-version --dry-run"
+    "prepublish": "npm version patch --git-tag-version"
   },
   "devDependencies": {
     "@babel/cli": "^7.14.5",
