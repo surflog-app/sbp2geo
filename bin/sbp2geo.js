@@ -1,4 +1,10 @@
-import fs from 'fs';
+'use strict';
+
+var fs = require('fs');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var fs__default = /*#__PURE__*/_interopDefaultLegacy(fs);
 
 // 8-bit integer, little-endian
 const I8LE = (buffer, offset) => {
@@ -194,7 +200,7 @@ const nextChunk = (fileDescriptor, outputBuffer, chunkLength) => {
 
     const promiseBody = (resolve, reject) => {
 
-        fs.read(
+        fs__default['default'].read(
             fileDescriptor,
             outputBuffer,
             0,
@@ -350,7 +356,7 @@ const main = (argc, argv) => {
 
         return new Promise((resolve, reject) => {
 
-            fs.open(fileName, flags, (error, fileDescriptor) => {
+            fs__default['default'].open(fileName, flags, (error, fileDescriptor) => {
 
                 if (error) {
 
@@ -372,7 +378,7 @@ const main = (argc, argv) => {
 
         return new Promise((resolve, reject) => {
 
-            fs.writeFile(fileName, content, (error) => {
+            fs__default['default'].writeFile(fileName, content, (error) => {
 
                 if (error) {
 
