@@ -18,7 +18,8 @@
   "scripts": {
     "build": "npx rollup ./sources/sbp2json/index.mjs --file ./index.js --format commonjs",
     "build-cli": "npx rollup ./sources/cli.js --file ./bin/sbp2geo.js",
-    "prepublish": "npm version patch --git-tag-version"
+    "predeploy": "npm version patch --git-tag-version",
+    "deploy": "npm publish"
   },
   "devDependencies": {
     "@babel/cli": "7.14.5",
