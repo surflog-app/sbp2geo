@@ -1,6 +1,23 @@
 {
+  "name": "sbp2geo",
+  "version": "1.0.0",
+  "description": "SBP to GeoJSON",
+  "main": "sources/sbp2json.js",
+  "files": [
+    "sources/sbp2json.js"
+  ],
+  "bin": {
+    "sbp2geo": "bin/sbp2geo.js"
+  },
+  "repository": "https://github.com/webjay/sbp2geo.git",
+  "keywords": [
+    "sbp",
+    "geojson"
+  ],
   "scripts": {
-    "build": "npx rollup ./sources/sbp2json/index.mjs --file ./sources/sbp2json.js --format commonjs"
+    "build": "npx rollup ./sources/sbp2json/index.mjs --file ./sources/sbp2json.js --format commonjs",
+    "build-cli": "npx rollup ./sources/cli.js --file ./bin/sbp2geo.js",
+    "prepublish": "npm version patch --git-tag-version --dry-run"
   },
   "devDependencies": {
     "@babel/cli": "^7.14.5",

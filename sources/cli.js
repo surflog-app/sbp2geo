@@ -1,5 +1,5 @@
 import fs from 'fs';
-import SBP2JSON from './sources/sbp2json/index.mjs';
+import SBP2JSON from './sbp2json/index.mjs';
 
 const main = (argc, argv) => {
 
