@@ -1,0 +1,14 @@
+The SBP file format is fairly simple. It has the following main structure:
+
+[START]
+[64 BYTES - HEADER]
+[32 BYTES - POINT 001]
+[32 BYTES - POINT 002]
+[32 BYTES - POINT 003]
+[...]
+[32 BYTES - POINT nnn]
+[END]
+
+It seems that the byte at offset 30 of a point chunk says if it's the start of a track, or isn't.
+This is needed to split the tracks, but this conversion library simply merges all points together
+into one big track.
