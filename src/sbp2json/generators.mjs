@@ -6,30 +6,22 @@ const SIZE_CHUNK = 32; // bytes, octets
 const SIZE_UPPER = Math.max(SIZE_HEADER, SIZE_CHUNK); // bytes, octets
 
 const parseHeader = (chunkHeader) => {
-
   // TODO: parse header
   return Object.freeze({});
-
 };
 
 export const ERROR_INCORRECT_HEADER_SIZE = 'incorrect size for header!';
 export const ERROR_INVALID_HEADER = 'invalid header inside file!';
 
 export const nextChunk = (fileDescriptor, outputBuffer, chunkLength) => {
-
   const callback = (resolve, reject) => (error, bytesRead) => {
-
     if (error) {
       reject(error);
       return;
     }
-
     resolve(bytesRead);
-
   };
-
   const promiseBody = (resolve, reject) => {
-
     fs.read(
       fileDescriptor,
       outputBuffer,
@@ -38,11 +30,8 @@ export const nextChunk = (fileDescriptor, outputBuffer, chunkLength) => {
       null,
       callback(resolve, reject),
     );
-
   };
-
   return new Promise(promiseBody);
-
 };
 
 export async function* chunksGenerator(fileDescriptor) {
