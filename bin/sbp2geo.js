@@ -355,7 +355,7 @@ function main() {
   parseReadStream(streamRead).then(output);
 }
 
-if (process.argv.length >= 2) {
+if (process.argv.length > 2) {
   main();
 } else {
   console.log('Usage: sbp2geo file.sbp > geo.json');
