@@ -1,6 +1,6 @@
 {
   "name": "sbp2geo",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "SBP to GeoJSON",
   "main": "index.js",
   "files": [
