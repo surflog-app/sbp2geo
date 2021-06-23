@@ -1,6 +1,7 @@
 import Generators from './generators.mjs';
+import Streams from './streams.mjs';
 
-export const convertFile = async (fileDescriptor) => {
+export const convertFromDescriptor = async (fileDescriptor) => {
 
     const object = {
         'type': 'FeatureCollection',
@@ -9,7 +10,7 @@ export const convertFile = async (fileDescriptor) => {
 
     const features = object['features'];
 
-    const tracksStream = Generators.tracksGenerator(fileDescriptor);
+    const tracksStream = Generators.tracksDescriptor(fileDescriptor);
 
     for await (const track of tracksStream) {
 
@@ -21,8 +22,15 @@ export const convertFile = async (fileDescriptor) => {
 
 };
 
+export const convertFromStream = async (readStream) => {
+
+    return await Streams.parseReadStream(readStream);
+
+};
+
 const SBP2JSON = Object.freeze({
-    convertFile,
+    convertFromDescriptor,
+    convertFromStream,
 });
 
 export default SBP2JSON;

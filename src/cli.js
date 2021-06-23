@@ -1,24 +1,20 @@
-import { createReadStream, createWriteStream } from 'fs';
-import SBP2JSON from './sbp2json/index.mjs';
+import { createReadStream } from 'fs';
+import sbp2json from './sbp2json/streams.mjs';
 
-const main = (argc, argv) => {
+const { parseReadStream } = sbp2json;
 
-  if (argc !== 4) {
-    console.log('Usage: node main.mjs <input-file> <output-file>');
-    return;
-  }
+function output(result) {
+  process.stdout.write(JSON.stringify(result, null, '  '));
+}
 
-  const inputFile = argv[2];
-  const outputFile = argv[3];
-
+function main() {
+  const inputFile = process.argv[2];
   const streamRead = createReadStream(inputFile);
-  const streamWrite = createWriteStream(outputFile);
-  streamRead.pipe(streamWrite);
-  // SBP2JSON.convertStream(streamRead, streamWrite);
-  streamWrite.on('finish', () => {
-    console.log('All writes are now complete.');
-  });
+  parseReadStream(streamRead).then(output);
+}
 
-};
-
-main(process.argv.length, process.argv);
+if (process.argv.length >= 2) {
+  main();
+} else {
+  console.log('Usage: sbp2geo file.sbp > geo.json');
+}

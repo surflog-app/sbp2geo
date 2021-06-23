@@ -3,10 +3,6 @@
 
 var fs = require('fs');
 
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-var fs__default = /*#__PURE__*/_interopDefaultLegacy(fs);
-
 // 8-bit integer, little-endian
 const I8LE = (buffer, offset) => {
 
@@ -176,39 +172,166 @@ const SIZE_HEADER = 64; // bytes, octets
 const SIZE_CHUNK = 32; // bytes, octets
 const SIZE_UPPER = Math.max(SIZE_HEADER, SIZE_CHUNK); // bytes, octets
 
-const parseHeader = (chunkHeader) => {
+const STATUS_READ_HEADER = 1;
+const STATUS_READ_CHUNK = 2;
 
-    // TODO: parse header
-    return Object.freeze({});
-
-};
-
-const ERROR_INCORRECT_HEADER_SIZE = 'incorrect size for header!';
-const ERROR_INVALID_HEADER = 'invalid header inside file!';
-
-const nextChunk = (fileDescriptor, outputBuffer, chunkLength) => {
-
-    const callback = (resolve, reject) => (error, bytesRead) => {
-
-        if (error) {
-            reject(error);
-            return;
-        }
-
-        resolve(bytesRead);
-
-    };
+const parseReadStream$1 = /* async */ (readStream) => {
 
     const promiseBody = (resolve, reject) => {
 
-        fs__default['default'].read(
-            fileDescriptor,
-            outputBuffer,
-            0,
-            chunkLength,
-            null,
-            callback(resolve, reject),
-        );
+        let feature, timesArray, coordinatesArray;
+
+        let firstChunk = true;
+
+        const buffer = Buffer.alloc(SIZE_UPPER);
+
+        const handleCreateFeature = () => {
+
+            const name = Parser.chunkName(buffer);
+            const time = Parser.chunkTime(buffer);
+            const coordinates = Parser.chunkCoordinates(buffer);
+
+            feature = {
+                'type': 'Feature',
+                'properties': {
+                    'name': name,
+                    'time': time,
+                    'coordTimes': [time],
+                },
+                'geometry': {
+                    'type': 'LineString',
+                    'coordinates': [coordinates],
+                },
+            };
+
+            timesArray = feature['properties']['coordTimes'];
+            coordinatesArray = feature['geometry']['coordinates'];
+
+        };
+
+        const handleBufferChunk = () => {
+
+            const time = Parser.chunkTime(buffer);
+            const coordinates = Parser.chunkCoordinates(buffer);
+
+            timesArray.push(time);
+            coordinatesArray.push(coordinates);
+
+        };
+
+        let status = STATUS_READ_HEADER;
+
+        let sizePartialHeader = 0;
+        let sizePartialChunk = 0;
+
+        const handleHeader = (data) => {
+
+            const sizeRemainingHeader = SIZE_HEADER - sizePartialHeader | 0;
+
+            if (sizeRemainingHeader <= data.length) {
+
+                data.copy(buffer, sizePartialHeader, sizeRemainingHeader);
+
+                status = STATUS_READ_CHUNK;
+
+                handleChunk(data, sizeRemainingHeader);
+
+            } else {
+
+                data.copy(buffer, sizePartialHeader);
+
+                sizePartialHeader = sizePartialHeader + data.length | 0;
+
+            }
+
+        };
+
+        const handleChunk = (data, offset) => {
+
+            while (true) {
+
+                const sizeReceived = data.length - offset | 0;
+
+                const sizeRemainingChunk = SIZE_CHUNK - sizePartialChunk | 0;
+
+                if (sizeReceived < SIZE_CHUNK) {
+
+                    data.copy(
+                        buffer,
+                        sizePartialChunk,
+                        offset,
+                    );
+
+                    sizePartialChunk = sizePartialChunk + sizeReceived | 0;
+
+                    break;
+
+                }
+
+                const nextOffset = offset + sizeRemainingChunk | 0;
+
+                data.copy(
+                    buffer,
+                    sizePartialChunk,
+                    offset,
+                    nextOffset,
+                );
+
+                offset = nextOffset;
+
+                sizePartialChunk = 0;
+
+                if (firstChunk) {
+
+                    firstChunk = false;
+
+                    handleCreateFeature();
+
+                } else {
+
+                    handleBufferChunk();
+
+                }
+
+            }
+
+        };
+
+        // let absoluteOffset = 0;
+
+        const handleData = (data) => {
+
+            // console.log('absoluteOffset: ', absoluteOffset);
+            // absoluteOffset += data.length;
+
+            if (status === STATUS_READ_HEADER) {
+                handleHeader(data);
+            }
+
+            if (status === STATUS_READ_CHUNK) {
+                handleChunk(data, 0);
+            }
+
+        };
+
+        readStream.on('data', handleData);
+
+        readStream.once('end', () => {
+
+            const object = {
+                'type': 'FeatureCollection',
+                'features': [feature],
+            };
+
+            resolve(object);
+
+        });
+
+        readStream.once('error', (error) => {
+
+            reject(error);
+
+        });
 
     };
 
@@ -216,203 +339,24 @@ const nextChunk = (fileDescriptor, outputBuffer, chunkLength) => {
 
 };
 
-async function* chunksGenerator(fileDescriptor) {
-
-    const buffer = Buffer.alloc(SIZE_UPPER);
-
-    // reads header from file descriptor
-    const bytesRead = await nextChunk(fileDescriptor, buffer, SIZE_HEADER);
-
-    if (bytesRead !== SIZE_HEADER) { // failed to fully read header
-        throw new Error(ERROR_INCORRECT_HEADER_SIZE);
-    }
-
-    // if failed to parse header
-    if (!parseHeader()) {
-        throw new Error(ERROR_INVALID_HEADER);
-    }
-
-    // yields the header chunk (32 bytes)
-    yield buffer;
-
-    let chunksLeft = true;
-
-    while (chunksLeft) {
-
-        const bytesRead = await nextChunk(fileDescriptor, buffer, SIZE_CHUNK);
-
-        if (bytesRead === 0) { // no more chunks to be read
-            break;
-        }
-
-        if (bytesRead !== SIZE_CHUNK) { // failed to fully read an entry
-            throw new Error();
-        }
-
-        // yields the received chunk (64 bytes)
-        yield buffer;
-
-    }
-
-}
-
-async function* tracksGenerator(fileDescriptor) {
-
-    const createFeature = (startChunk) => {
-
-        const name = Parser.chunkName(startChunk);
-        const time = Parser.chunkTime(startChunk);
-        const coordinates = Parser.chunkCoordinates(startChunk);
-    
-        const feature = {
-            'type': 'Feature',
-            'properties': {
-                'name': name,
-                'time': time,
-                'coordTimes': [time],
-            },
-            'geometry': {
-                'type': 'LineString',
-                'coordinates': [coordinates],
-            },
-        };
-    
-        return feature;
-    
-    };
-
-    const chunkStream = chunksGenerator(fileDescriptor);
-
-    await chunkStream.next(); // ignores header
-
-    const { value: startChunk, done } = await chunkStream.next();
-
-    if (done) {
-        return;
-    }
-
-    let feature = createFeature(startChunk);
-
-    const timesArray = feature['properties']['coordTimes'];
-    const coordinatesArray = feature['geometry']['coordinates'];
-
-    for await (const chunk of chunkStream) {
-
-        const time = Parser.chunkTime(chunk);
-        const coordinates = Parser.chunkCoordinates(chunk);
-    
-        timesArray.push(time);
-        coordinatesArray.push(coordinates);
-
-    }
-
-    yield feature;
-
-}
-
-const Generators = Object.freeze({
-    ERROR_INCORRECT_HEADER_SIZE,
-    ERROR_INVALID_HEADER,
-    nextChunk,
-    chunksGenerator,
-    tracksGenerator,
+const Streams = Object.freeze({
+    parseReadStream: parseReadStream$1,
 });
 
-const convertFile = async (fileDescriptor) => {
+const { parseReadStream } = Streams;
 
-    const object = {
-        'type': 'FeatureCollection',
-        'features': [],
-    };
+function output(result) {
+  process.stdout.write(JSON.stringify(result, null, '  '));
+}
 
-    const features = object['features'];
+function main() {
+  const inputFile = process.argv[2];
+  const streamRead = fs.createReadStream(inputFile);
+  parseReadStream(streamRead).then(output);
+}
 
-    const tracksStream = Generators.tracksGenerator(fileDescriptor);
-
-    for await (const track of tracksStream) {
-
-        features.push(track);
-
-    }
-
-    return object;
-
-};
-
-const SBP2JSON = Object.freeze({
-    convertFile,
-});
-
-const main = (argc, argv) => {
-
-    if (argc !== 4) {
-        console.log('Usage: node main.mjs <input-file> <output-file>');
-        return;
-    }
-
-    const inputFile = argv[2];
-    const outputFile = argv[3];
-
-    const open = (fileName, flags) => {
-
-        return new Promise((resolve, reject) => {
-
-            fs__default['default'].open(fileName, flags, (error, fileDescriptor) => {
-
-                if (error) {
-
-                    reject(error);
-
-                } else {
-
-                    resolve(fileDescriptor);
-
-                }
-                
-            });
-
-        });
-
-    };
-
-    const write = (fileName, content) => {
-
-        return new Promise((resolve, reject) => {
-
-            fs__default['default'].writeFile(fileName, content, (error) => {
-
-                if (error) {
-
-                    reject(error);
-
-                } else {
-
-                    resolve();
-
-                }
-
-            });
-
-        });
-
-    };
-
-    const promise = (async () => {
-
-        const fileDescriptor = await open(inputFile, 'r');
-
-        const object = await SBP2JSON.convertFile(fileDescriptor);
-
-        const content = JSON.stringify(object, null, 2);
-
-        await write(outputFile, content);
-
-    })();
-
-    promise.catch((error) => {
-        console.error('[ERROR]: ', error);
-    });
-
-};
-
-main(process.argv.length, process.argv);
+if (process.argv.length >= 2) {
+  main();
+} else {
+  console.log('Usage: sbp2geo file.sbp > geo.json');
+}
