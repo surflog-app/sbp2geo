@@ -11,13 +11,32 @@ const parseReadStream = /* async */ (readStream) => {
 
     const promiseBody = (resolve, reject) => {
 
+        const object = {
+            'type': 'FeatureCollection',
+            'features': [],
+        };
+
+        const features = object['features'];
+
         let feature, timesArray, coordinatesArray;
 
         let firstChunk = true;
 
         const buffer = Buffer.alloc(SIZE_UPPER);
 
+        const flushFeature = () => {
+
+            if (feature && coordinatesArray.length > 1) {
+
+                features.push(feature);
+
+            }
+
+        };
+
         const handleCreateFeature = () => {
+
+            flushFeature();
 
             const name = Parser.chunkName(buffer);
             const time = Parser.chunkTime(buffer);
@@ -121,6 +140,10 @@ const parseReadStream = /* async */ (readStream) => {
 
                 sizePartialChunk = 0;
 
+                const trackStart = Parser.isTrackStart(buffer);
+
+                firstChunk = firstChunk || trackStart;
+
                 if (firstChunk) {
 
                     firstChunk = false;
@@ -158,10 +181,7 @@ const parseReadStream = /* async */ (readStream) => {
 
         readStream.once('end', () => {
 
-            const object = {
-                'type': 'FeatureCollection',
-                'features': [feature],
-            };
+            flushFeature();
 
             resolve(object);
 
