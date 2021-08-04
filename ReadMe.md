@@ -2,7 +2,7 @@
 
 ## Project usage
 
-    npm install sbp2geo
+    npm i @surflog/sbp2geo
 
 ### Code
 
@@ -11,6 +11,6 @@
 
 ## Terminal
 
-    npm install -g sbp2geo
+    npm install @surflog/sbp2geo
 
 Usage: sbp2geo file.sbp > geo.json
