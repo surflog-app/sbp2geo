@@ -10,7 +10,7 @@
   "bin": {
     "sbp2geo": "bin/sbp2geo.js"
   },
-  "repository": "https://github.com/webjay/sbp2geo.git",
+  "repository": "https://github.com/surflog-tech/sbp2geo",
   "keywords": [
     "sbp",
     "geojson"
