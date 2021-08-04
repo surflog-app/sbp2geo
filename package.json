@@ -1,5 +1,5 @@
 {
-  "name": "sbp2geo",
+  "name": "@surflog/sbp2geo",
   "version": "1.0.6",
   "description": "SBP to GeoJSON",
   "main": "index.js",
