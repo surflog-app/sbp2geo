@@ -1,6 +1,6 @@
-import Integers from './integers.mjs';
+import Integers from '../shared/integers';
 
-export const chunkName = (chunk) => {
+export const chunkName = (chunk: Buffer) => {
 
     const date = chunkDate(chunk);
 
@@ -15,7 +15,7 @@ export const chunkName = (chunk) => {
 
 };
 
-export const chunkDate = (chunk) => {
+export const chunkDate = (chunk: Buffer) => {
 
     // January 1st, 2000 - 00:00:00.000 UTC 0
     const TIME_REFERENCE = "2000-01-01T00:00:00.000Z";
@@ -51,7 +51,7 @@ export const chunkDate = (chunk) => {
 
 };
 
-export const chunkTime = (chunk) => {
+export const chunkTime = (chunk: Buffer) => {
 
     const date = chunkDate(chunk);
 
@@ -59,7 +59,7 @@ export const chunkTime = (chunk) => {
 
 };
 
-export const chunkCoordinates = (chunk) => {
+export const chunkCoordinates = (chunk: Buffer) => {
 
     const latitude = Integers.I32LE(chunk, 12);
     const longitude = Integers.I32LE(chunk, 16);
@@ -73,7 +73,7 @@ export const chunkCoordinates = (chunk) => {
 
 };
 
-export const isTrackStart = (chunk) => {
+export const isTrackStart = (chunk: Buffer) => {
 
     const flags = chunk[30];
 

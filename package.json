@@ -16,12 +16,13 @@
     "geojson"
   ],
   "scripts": {
-    "build": "npx rollup ./src/stream.js --file ./index.js --exports default --config",
-    "build-cli": "npx rollup ./src/cli.js --file ./bin/sbp2geo.js --banner '#!/usr/bin/env node' --no-esModule --config",
+    "build": "npx tsc",
     "predeploy": "npm version patch --git-tag-version",
     "deploy": "npm publish"
   },
   "devDependencies": {
-    "rollup": "2.52.2"
+    "@types/node": "^16.6.1",
+    "rollup": "2.52.2",
+    "typescript": "^4.3.5"
   }
 }

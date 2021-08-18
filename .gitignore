@@ -105,3 +105,6 @@ dist
 
 # Mac
 .DS_Store
+
+# output folder for compiled typescript files
+build/

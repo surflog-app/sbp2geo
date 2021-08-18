@@ -1,11 +1,11 @@
-import fs from 'fs';
-import Parser from './parser.mjs';
+import { FileHandle } from 'fs/promises';
+import Parser from '../parsers/index';
 
 const SIZE_HEADER = 64; // bytes, octets
 const SIZE_CHUNK = 32; // bytes, octets
-const SIZE_UPPER = Math.max(SIZE_HEADER, SIZE_CHUNK); // bytes, octets
+const SIZE_UPPER = Math.max(SIZE_HEADER, SIZE_CHUNK) | 0; // bytes, octets
 
-const parseHeader = (chunkHeader) => {
+const parseHeader = (chunkHeader: Buffer) => {
 
     // TODO: parse header
     return Object.freeze({});
@@ -15,42 +15,24 @@ const parseHeader = (chunkHeader) => {
 export const ERROR_INCORRECT_HEADER_SIZE = 'incorrect size for header!';
 export const ERROR_INVALID_HEADER = 'invalid header inside file!';
 
-const nextChunk = (fileDescriptor, outputBuffer, chunkLength) => {
+const nextChunk = async (
+  file: FileHandle,
+  outputBuffer: Buffer,
+  chunkLength: number,
+) => {
 
-    const callback = (resolve, reject) => (error, bytesRead) => {
+  const { bytesRead } = await file.read(outputBuffer, 0, chunkLength, null);
 
-        if (error) {
-            reject(error);
-            return;
-        }
-
-        resolve(bytesRead);
-
-    };
-
-    const promiseBody = (resolve, reject) => {
-
-        fs.read(
-            fileDescriptor,
-            outputBuffer,
-            0,
-            chunkLength,
-            null,
-            callback(resolve, reject),
-        );
-
-    };
-
-    return new Promise(promiseBody);
+  return bytesRead;
 
 };
 
-export async function* chunksDescriptor(fileDescriptor) {
+export async function* chunksDescriptor(file: FileHandle) {
 
     const buffer = Buffer.alloc(SIZE_UPPER);
 
     // reads header from file descriptor
-    const bytesRead = await nextChunk(fileDescriptor, buffer, SIZE_HEADER);
+    const bytesRead = await nextChunk(file, buffer, SIZE_HEADER);
 
     if (bytesRead !== SIZE_HEADER) { // failed to fully read header
         throw new Error(ERROR_INCORRECT_HEADER_SIZE);
@@ -68,7 +50,7 @@ export async function* chunksDescriptor(fileDescriptor) {
 
     while (chunksLeft) {
 
-        const bytesRead = await nextChunk(fileDescriptor, buffer, SIZE_CHUNK);
+        const bytesRead = await nextChunk(file, buffer, SIZE_CHUNK);
 
         if (bytesRead === 0) { // no more chunks to be read
             break;
@@ -85,9 +67,9 @@ export async function* chunksDescriptor(fileDescriptor) {
 
 }
 
-export async function* tracksDescriptor(fileDescriptor) {
+export async function* tracksDescriptor(file: FileHandle) {
 
-    const createFeature = (startChunk) => {
+    const createFeature = (startChunk: Buffer) => {
 
         const name = Parser.chunkName(startChunk);
         const time = Parser.chunkTime(startChunk);
@@ -110,15 +92,17 @@ export async function* tracksDescriptor(fileDescriptor) {
     
     };
 
-    const chunkStream = chunksDescriptor(fileDescriptor);
+    const chunkStream = chunksDescriptor(file);
 
     await chunkStream.next(); // ignores header
 
-    const { value: startChunk, done } = await chunkStream.next();
+    const { value, done } = await chunkStream.next();
 
     if (done) {
         return;
     }
+
+    const startChunk = value as Buffer;
 
     const feature = createFeature(startChunk);
 

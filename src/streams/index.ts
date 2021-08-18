@@ -1,4 +1,5 @@
-import Parser from './parser.mjs';
+import { ReadStream } from 'fs';
+import Parser from '../parsers/index';
 
 const SIZE_HEADER = 64; // bytes, octets
 const SIZE_CHUNK = 32; // bytes, octets
@@ -7,18 +8,18 @@ const SIZE_UPPER = Math.max(SIZE_HEADER, SIZE_CHUNK); // bytes, octets
 const STATUS_READ_HEADER = 1;
 const STATUS_READ_CHUNK = 2;
 
-const parseReadStream = /* async */ (readStream) => {
+const parseReadStream = /* async */ (readStream: ReadStream) => {
 
-    const promiseBody = (resolve, reject) => {
+    const promiseBody = (resolve: any, reject: any) => {
 
         const object = {
             'type': 'FeatureCollection',
-            'features': [],
+            'features': new Array<any>(),
         };
 
         const features = object['features'];
 
-        let feature, timesArray, coordinatesArray;
+        let feature: any, timesArray, coordinatesArray;
 
         let firstChunk = true;
 
@@ -81,7 +82,7 @@ const parseReadStream = /* async */ (readStream) => {
         let sizePartialHeader = 0;
         let sizePartialChunk = 0;
 
-        const handleHeader = (data) => {
+        const handleHeader = (data: Buffer) => {
 
             const sizeRemainingHeader = SIZE_HEADER - sizePartialHeader | 0;
 
@@ -105,7 +106,7 @@ const parseReadStream = /* async */ (readStream) => {
 
         };
 
-        const handleChunk = (data, offset) => {
+        const handleChunk = (data: Buffer, offset: number) => {
 
             while (true) {
 
@@ -160,12 +161,7 @@ const parseReadStream = /* async */ (readStream) => {
 
         };
 
-        // let absoluteOffset = 0;
-
-        const handleData = (data) => {
-
-            // console.log('absoluteOffset: ', absoluteOffset);
-            // absoluteOffset += data.length;
+        const handleData = (data: Buffer) => {
 
             if (status === STATUS_READ_HEADER) {
                 handleHeader(data);
@@ -195,7 +191,7 @@ const parseReadStream = /* async */ (readStream) => {
 
     };
 
-    return new Promise(promiseBody);
+    return new Promise<any>(promiseBody);
 
 };
 
