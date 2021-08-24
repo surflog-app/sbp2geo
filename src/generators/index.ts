@@ -3,7 +3,6 @@ import Parser from '../parsers/index';
 
 const SIZE_HEADER = 64; // bytes, octets
 const SIZE_CHUNK = 32; // bytes, octets
-const SIZE_UPPER = Math.max(SIZE_HEADER, SIZE_CHUNK) | 0; // bytes, octets
 
 const parseHeader = (chunkHeader: Buffer) => {
 
@@ -15,13 +14,9 @@ const parseHeader = (chunkHeader: Buffer) => {
 export const ERROR_INCORRECT_HEADER_SIZE = 'incorrect size for header!';
 export const ERROR_INVALID_HEADER = 'invalid header inside file!';
 
-const nextChunk = async (
-  file: FileHandle,
-  outputBuffer: Buffer,
-  chunkLength: number,
-) => {
+const nextChunk = async (file: FileHandle, buffer: Buffer) => {
 
-  const { bytesRead } = await file.read(outputBuffer, 0, chunkLength, null);
+  const { bytesRead } = await file.read({ buffer });
 
   return bytesRead;
 
@@ -29,28 +24,29 @@ const nextChunk = async (
 
 export async function* chunksDescriptor(file: FileHandle) {
 
-    const buffer = Buffer.alloc(SIZE_UPPER);
+    const bufferHeader = Buffer.alloc(SIZE_HEADER);
 
     // reads header from file descriptor
-    const bytesRead = await nextChunk(file, buffer, SIZE_HEADER);
+    const bytesRead = await nextChunk(file, bufferHeader);
 
     if (bytesRead !== SIZE_HEADER) { // failed to fully read header
         throw new Error(ERROR_INCORRECT_HEADER_SIZE);
     }
 
     // if failed to parse header
-    if (!parseHeader(buffer)) {
+    if (!parseHeader(bufferHeader)) {
         throw new Error(ERROR_INVALID_HEADER);
     }
 
-    // yields the header chunk (32 bytes)
-    yield buffer;
+    // yields the header chunk (64 bytes)
+    yield bufferHeader;
 
+    const bufferChunk = Buffer.alloc(SIZE_CHUNK);
     let chunksLeft = true;
 
     while (chunksLeft) {
 
-        const bytesRead = await nextChunk(file, buffer, SIZE_CHUNK);
+        const bytesRead = await nextChunk(file, bufferChunk);
 
         if (bytesRead === 0) { // no more chunks to be read
             break;
@@ -60,8 +56,8 @@ export async function* chunksDescriptor(file: FileHandle) {
             throw new Error();
         }
 
-        // yields the received chunk (64 bytes)
-        yield buffer;
+        // yields the received chunk (32 bytes)
+        yield bufferChunk;
 
     }
 
