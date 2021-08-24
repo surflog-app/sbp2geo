@@ -1,4 +1,5 @@
 const fs = require('fs');
+const fsPromises = require('fs/promises');
 const SBP2GEO = require('../build/index.js');
 
 function output(result) {
@@ -6,9 +7,24 @@ function output(result) {
 }
 
 function main() {
-  const inputFile = process.argv[2];
-  const streamRead = fs.createReadStream(inputFile);
-  SBP2GEO.convertFromStream(streamRead).then(output);
+
+  const promise = (async () => {
+
+    const inputFile = process.argv[2];
+    const fileDescriptor = await fsPromises.open(inputFile, 'r');
+    const result = await SBP2GEO.convertFromDescriptor(fileDescriptor);
+
+    output(result);
+
+  })();
+
+  promise.catch((error) => {
+
+    console.log('[ERROR]: ', error);
+    console.log(error.stack);
+
+  });
+
 }
 
 if (process.argv.length > 2) {
