@@ -1,8 +1,8 @@
 import { FileHandle } from 'fs/promises';
 import Parser from '../parsers/index';
+import Constants from '../shared/constants';
 
-const SIZE_HEADER = 64; // bytes, octets
-const SIZE_CHUNK = 32; // bytes, octets
+const { SIZE_CHUNK, SIZE_HEADER } = Constants;
 
 const parseHeader = (chunkHeader: Buffer) => {
 

@@ -1,8 +1,9 @@
 import { ReadStream } from 'fs';
 import Parser from '../parsers/index';
+import Constants from '../shared/constants';
 
-const SIZE_HEADER = 64; // bytes, octets
-const SIZE_CHUNK = 32; // bytes, octets
+const { SIZE_CHUNK, SIZE_HEADER } = Constants;
+
 const SIZE_UPPER = Math.max(SIZE_HEADER, SIZE_CHUNK); // bytes, octets
 
 const STATUS_READ_HEADER = 1;
