@@ -100,22 +100,47 @@ export async function* tracksDescriptor(file: FileHandle) {
 
     const startChunk = value as Buffer;
 
-    const feature = createFeature(startChunk);
+    let feature = createFeature(startChunk);
 
-    const timesArray = feature['properties']['coordTimes'];
-    const coordinatesArray = feature['geometry']['coordinates'];
+    let pointsCount = 1;
+
+    let timesArray = feature['properties']['coordTimes'];
+    let coordinatesArray = feature['geometry']['coordinates'];
 
     for await (const chunk of chunkStream) {
 
-        const time = Parser.chunkTime(chunk);
-        const coordinates = Parser.chunkCoordinates(chunk);
-    
-        timesArray.push(time);
-        coordinatesArray.push(coordinates);
+        if (Parser.isTrackStart(chunk)) {
+
+            if (pointsCount > 1) {
+
+                yield feature;
+
+            }
+
+            feature = createFeature(chunk);
+
+            pointsCount = 1;
+
+            timesArray = feature['properties']['coordTimes'];
+            coordinatesArray = feature['geometry']['coordinates'];
+
+        } else {
+
+            pointsCount = pointsCount + 1 | 0;
+
+            const time = Parser.chunkTime(chunk);
+            const coordinates = Parser.chunkCoordinates(chunk);
+
+            timesArray.push(time);
+            coordinatesArray.push(coordinates);
+
+        }
 
     }
 
-    yield feature;
+    if (pointsCount > 1) {
+        yield feature;
+    }
 
 }
 
