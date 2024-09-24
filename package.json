@@ -22,6 +22,6 @@
     "deploy": "npm publish"
   },
   "devDependencies": {
-    "rollup": "2.52.2"
+    "rollup": "3.29.5"
   }
 }
